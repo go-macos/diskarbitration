@@ -1,4 +1,4 @@
 github.com/ebitengine/purego v0.11.1 h1:2zpWRSQNVKN4eKsKO9eM1ILDgWfYMY9GwqRmK6XeQ/0=
 github.com/ebitengine/purego v0.11.1/go.mod h1:DCHPP08djqhNSoTfImcnHYQRZmd0qhakvrozqaEYhGQ=
-github.com/go-macos/objc v0.10.2 h1:WX8CsDT6SbDrIT2wHAZEQBhGcpKR750llRS4oAfX9ww=
-github.com/go-macos/objc v0.10.2/go.mod h1:68hzSUlhg5bFbg1kO0z4DM6xOk4B/IofuxdlyhHHtt8=
+github.com/go-macos/objc v0.11.0 h1:YnSZbQDR0nXSuGwEKr+BaY14Jevw5uRHTrry4l5P4d0=
+github.com/go-macos/objc v0.11.0/go.mod h1:G2YcKu5C2Xs08vcM/CUUUeYUi9YeCHmkWcW+5RGwE/g=
