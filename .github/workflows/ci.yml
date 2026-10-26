@@ -137,9 +137,21 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27.2'
-      - name: Install qemu-user
+      # ⛔ `qemu-user-static` is a VIRTUAL package on Ubuntu 26.04, which
+      # `ubuntu-latest` became on 2026-10-19, and apt refuses to choose between its
+      # two providers:
+      #
+      #   E: Package 'qemu-user-static' has no installation candidate
+      #
+      # ⚠ Installing a provider is NOT the fix: `qemu-user-binfmt` registers binfmt
+      # handlers, it does not ship the `qemu-<arch>-static` binaries this lane
+      # invokes. `qemu-user` ships the dynamic `qemu-<arch>`, which is all that
+      # `go test -exec` needs, so both are installed and BOTH NAMES are accepted
+      # below. go-tex/engine#645 has the full account.
+      - name: install qemu user-mode emulators
         if: matrix.qemu != ''
-        run: sudo apt-get update && sudo apt-get install -y qemu-user-static
+        timeout-minutes: 10
+        run: sudo apt-get update && sudo apt-get install -y qemu-user qemu-user-binfmt
       - name: Build the test binary
         run: CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.goarch }} go test -c -o diskarbitration.test .
       # QEMU_CPU must be EXPORTED ONLY when it has a value: qemu-user refuses
@@ -158,7 +170,22 @@ jobs:
           if [ -z "$QEMU" ]; then
             ./diskarbitration.test -test.count=1 -test.v
           else
-            "$QEMU" ./diskarbitration.test -test.count=1 -test.v
+            q=""
+            for cand in "$QEMU" "${QEMU%-static}"; do
+              command -v "$cand" >/dev/null 2>&1 && q="$cand" && break
+            done
+            # ⛔ A missing emulator FAILS this lane. It is reached only when the
+            # matrix named one, so there is nothing here to fall back to: a lane
+            # that reports success for an architecture it never ran is the one
+            # outcome this matrix exists to rule out.
+            if [ -z "$q" ]; then
+              echo "::error::no qemu user emulator for ${{ matrix.goarch }} (looked for $QEMU and ${QEMU%-static})"
+              exit 1
+            fi
+            # Printed on purpose: without it, "ran under emulation" and "skipped"
+            # are indistinguishable from a green tick.
+            echo "running ${{ matrix.goarch }} under $q"
+            "$q" ./diskarbitration.test -test.count=1 -test.v
           fi
 
   linux:
